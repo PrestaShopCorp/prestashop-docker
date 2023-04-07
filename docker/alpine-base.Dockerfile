@@ -1,7 +1,7 @@
 ARG PS_VERSION
-ARG PHP_VERSION
+ARG PHP_DOCKER_TAG
 
-FROM php:${PHP_VERSION}-fpm-alpine AS alpine-base-prestashop
+FROM php:${PHP_DOCKER_TAG} AS alpine-base-prestashop
 ARG PS_VERSION
 ARG PS_FOLDER=/var/www/html
 
@@ -34,14 +34,6 @@ RUN mkdir -p ${PS_FOLDER} \
   && bash /ps-zip-extractor.sh ${PS_FOLDER} www-data \
   && rm -rf /tmp/prestashop.zip /ps-zip-extractor.sh
 
-# -----------------------
-# Flashlight final image
-# -----------------------
-FROM base-prestashop as optimize-prestashop
-ARG PS_VERSION
-ARG PHP_VERSION
-ARG PS_FOLDER=/var/www/html
-WORKDIR ${PS_FOLDER}
 
 # @TODO check opcache
 # RUN echo '\
@@ -61,11 +53,5 @@ ENV MYSQL_PASSWORD=prestashop
 ENV MYSQL_ROOT_PASSWORD=prestashop
 ENV MYSQL_PORT=3306
 ENV MYSQL_DATABASE=prestashop
-
-# Ship the dump within the image
-ADD ./dump-${PS_VERSION}-${PHP_VERSION}.sql /dump.sql
-
-# The new default runner
-ADD ./tools/sql-restore-and-run-nginx.sh /run.sh
 
 ENTRYPOINT ["/run.sh"]

@@ -1,0 +1,6 @@
+ARG PS_VERSION
+ARG PHP_DOCKER_TAG
+
+FROM php:${PHP_DOCKER_TAG} AS alpine-base-prestashop
+ARG PS_VERSION
+ARG PS_FOLDER=/var/www/html

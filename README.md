@@ -6,19 +6,44 @@ See: https://hub.docker.com/r/prestashop/prestashop
 ## Requirements
 
 - Docker: https://docs.docker.com/engine/install
+- [jq](https://stedolan.github.io/jq/):
+
+```bash
+apt install jq
+brew install jq
+apk add jq
+```
+
+- (optional) BuildX to cross compile
 
 ## Build
 
-To build a PrestaShop 8.0 with PHP 8.1 apache2 and debian bullesye:
+To build a PrestaShop 8.0.1:
 
 ```sh
-docker build \
-  --build-arg PHP_TAG=8.1-rc-apache-buster \
-  --build-arg PS_VERSION=8.0 \
-  --tag=prestashop/prestashop:8.0-apache2
-  -f docker/debian-base.Dockerfile \
-  .
+> PS_VERSION=8.0.1 ./build.sh --push
+prestashop/prestashop:8.0.1
+prestashop/prestashop:8.0.1-apache
+prestashop/prestashop:8.0.1-8.1
+prestashop/prestashop:8.0.1-8.1-apache
 ```
+
+Available env vars:
+
+| Env var                | Description                                                                         | Default                            |
+| ---------------------- | ----------------------------------------------------------------------------------- | ---------------------------------- |
+| **BUILDPLATFORM**      | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
+| **LINUX_DISTRIBUTION** | `debian` or `alpine`                                                                | `debian`                           |
+| **PHP_VERSION**        | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
+| **PHP_FLAVOUR**        | `fpm`, `apache` or `zts`                                                            | `apache`                           |
+| **PS_VERSION**         | PrestaShop version                                                                  | `latest`                           |
+| **DOCKER_REPOSITORY**  | the Docker image repository                                                         | `prestashop/prestashop`            |
+
+> Note: default debian distribution is set to Debian 11 Bullseye.
+
+---
+
+# WIP: Notes
 
 ## How to use
 
@@ -48,3 +73,18 @@ docker run --port 80:80 --detach --name prestashop prestashop/prestashop:8.0.1
 
 |8.0.1-8.1 | apache + php 8.1|
 ==> Si on veut proposer uniquement les versions recommandées pour la production ça simplifie le deal.
+
+Je publie le 01/01/2023 une 1.7.7.8 : le tag 1.7.7 et 1.7 bouge
+Je publie le 02/01/2023 une 1.7.7.9 : le tag 1.7.7 et 1.7 bouge
+
+8.0.1 => 8.0 bouge -> 8 bouge
+
+## BuildX
+
+```
+docker run --privileged --rm tonistiigi/binfmt --install arm64,arm,amd64
+docker buildx create --name multiarch --use
+docker buildx build --platform linux/amd64,linux/arm64
+
+--push to publish
+```
