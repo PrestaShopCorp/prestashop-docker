@@ -2,7 +2,7 @@
 #set -e -x
 
 function get_latest_prestashop_version {
-  curl -s --location --request GET 'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
+  curl --silent --location --request GET 'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
 }
 
 # TODO: remove regex from prestashop-versions
@@ -11,9 +11,17 @@ function get_recommended_php_version {
   jq -r '.["$PS_VERSION"].php.recommended' < prestashop-versions.json
 }
 
-function check_if_image_exist() {
+function check_if_image_exists {
   DOCKER_IMAGE=$1
   docker manifest inspect "$DOCKER_IMAGE" > /dev/null
+  echo $?
+}
+# https://docs.docker.com/docker-hub/api/latest
+function check_if_image_exists_on_hub {
+  namespace=$1
+  repository=$2
+  tag=$3
+  curl --silent --location --head --fail "https://hub.docker.com/v2/namespaces/$namespace/repositories/$repository/tags/$tag" > /dev/null
   echo $?
 }
 
@@ -37,12 +45,17 @@ echo "$PHP_VERSION"
 echo "$LINUX_DISTRIBUTION"
 echo "$PHP_DOCKER_TAG"
 
+#if [[ $(check_if_image_exists "php:$PHP_DOCKER_TAG") -ne 0 ]]; then
+if [[ $(check_if_image_exists_on_hub library php "$PHP_DOCKER_TAG") -ne 0 ]]; then
+  echo "Please check that this tag exists: $PHP_DOCKER_TAG"
+  echo "https://hub.docker.com/"
+fi
+
 ## TODO:
-#  - check here if php=$PHP_DOCKER_TAG exists
+#  - penser au docker login avant -> docker login -u "$USER" -p "$PASSWORD" "$REGISTRY" ou Action Github
+#  - [x] check here if php=$PHP_DOCKER_TAG exists
 #  - Check if image already exists on Docker Hub before pushing ?
 #  - Check if release exists before ?
-
-#docker login -u "$USER" -p "$PASSWORD" "$REGISTRY"
 
 ## Specific version
 #DOWNLOAD_URL=$(curl --location --request GET 'https://api.github.com/repos/prestashop/prestashop/releases'| jq -r '.[] | select(.tag_name | contains("$PS_VERSION")) | .assets[] | select(.name | contains(".zip")) | .browser_download_url')
