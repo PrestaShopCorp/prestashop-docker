@@ -1,60 +1,122 @@
 #!/bin/bash
-#set -e -x
+# https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
+set -eu
 
+function error {
+  echo -e "\e[1;31m${1:-Unknown error}\e[0m"
+  exit "${2:-1}"
+}
+
+# Get latest version of PrestaShop (via GitHub)
 function get_latest_prestashop_version {
   curl --silent --location --request GET 'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
 }
 
-# TODO: remove regex from prestashop-versions
+# Get recommended PHP version from `prestashop-versions.json`
+#
+# $1 - PrestaShop version
+#
+# Examples:
+# - get_recommended_php_version "8.0.4"
 function get_recommended_php_version {
   PS_VERSION=$1
-  jq -r '.["$PS_VERSION"].php.recommended' < prestashop-versions.json
+  RECOMMENDED_VERSION=
+  REGEXP_LIST=$(jq -r 'keys_unsorted | .[]' <prestashop-versions.json)
+
+  while IFS= read -r regExp; do
+    if [[ $PS_VERSION =~ $regExp ]]; then
+      RECOMMENDED_VERSION=$(jq -r '."'"${regExp}"'".php.recommended' <prestashop-versions.json)
+      break
+    fi
+  done <<<"$REGEXP_LIST"
+  echo "$RECOMMENDED_VERSION"
 }
 
-function check_if_image_exists {
-  DOCKER_IMAGE=$1
-  docker manifest inspect "$DOCKER_IMAGE" > /dev/null
-  echo $?
-}
+# Check if the image exists on the Docker hub
 # https://docs.docker.com/docker-hub/api/latest
+#
+# $1 - Namespace (library for official images)
+# $2 - Repository
+# $3 - Tag
+#
+# Examples:
+# - check_if_image_exists_on_hub "library" "php" "8.2-apache"
+# - check_if_image_exists_on_hub "venatum" "bull-board" "1.0"
 function check_if_image_exists_on_hub {
   namespace=$1
   repository=$2
   tag=$3
-  curl --silent --location --head --fail "https://hub.docker.com/v2/namespaces/$namespace/repositories/$repository/tags/$tag" > /dev/null
+  curl --silent --location --head --fail "https://hub.docker.com/v2/namespaces/$namespace/repositories/$repository/tags/$tag" >/dev/null
   echo $?
 }
 
 function get_tag_aliases {
+  DOCKER_REPOSITORY=$1
+  PS_VERSION=$2
+  PHP_FLAVOUR=$3
+
+  REGEXP_TAGS=
+  REGEXP_LIST=$(jq -r 'keys_unsorted | .[]' <prestashop-tags.json)
+
+  while IFS= read -r regExp; do
+    if [[ $PS_VERSION =~ $regExp ]]; then
+      REGEXP_TAGS=$(jq -r '."'"${regExp}"'".'"${PHP_FLAVOUR}"' | .[]' <prestashop-tags.json)
+      break
+    fi
+  done <<<"$REGEXP_LIST"
+  echo "$REGEXP_TAGS"
+
   # --tag="${DOCKER_REPOSITORY}:${TAG}"\
-  for tag in tags; do
-    return "--tag ${DOCKER_REPOSITORY}/"
-  done;
+  #  for tag in tags; do
+  #    return "--tag ${DOCKER_REPOSITORY}/"
+  #  done;
 }
 
+function get_platforms() {
+  jq -r '.[]' <arch.json | tr '\n' ','
+}
+
+# Main workflow
 DOCKER_REPOSITORY="${DOCKER_REPOSITORY:-prestashop/prestashop}"
 PS_VERSION="${PS_VERSION:-$(get_latest_prestashop_version)}"
-PHP_VERSION="${PHP_VERSION:-$(get_recommended_php_version $PS_VERSION)}"
+RECOMMENDED_VERSION=$(get_recommended_php_version "$PS_VERSION")
+PHP_VERSION="${PHP_VERSION:-$RECOMMENDED_VERSION}"
+if [[ -z "${PHP_VERSION}" && -z $RECOMMENDED_VERSION ]]; then
+  error "Could not find a recommended PHP version for ${PS_VERSION}" 2
+fi
 PHP_FLAVOUR="${PHP_FLAVOUR:-apache}"
 PHP_DOCKER_TAG="${PHP_VERSION}-${PHP_FLAVOUR}"
 LINUX_DISTRIBUTION="${LINUX_DISTRIBUTION:-debian}"
+BUILDPLATFORM="${BUILDPLATFORM:-$(get_platforms)}"
 
-echo "$DOCKER_REPOSITORY"
-echo "$PS_VERSION"
-echo "$PHP_VERSION"
-echo "$LINUX_DISTRIBUTION"
-echo "$PHP_DOCKER_TAG"
+# Check PHP flavour ? (in the list)
+# Check linux distribution ? (in the list)
 
-#if [[ $(check_if_image_exists "php:$PHP_DOCKER_TAG") -ne 0 ]]; then
+# Check that php image exist
 if [[ $(check_if_image_exists_on_hub library php "$PHP_DOCKER_TAG") -ne 0 ]]; then
-  echo "Please check that this tag exists: $PHP_DOCKER_TAG"
-  echo "https://hub.docker.com/"
+  echo "We could not find this image tag: $PHP_DOCKER_TAG"
+  echo "Please check availability on https://hub.docker.com/_/php"
+  exit 1
 fi
 
+echo "🐳 Use $DOCKER_REPOSITORY"
+echo "Use PrestaShop:v$PS_VERSION with PHP: $PHP_VERSION on $LINUX_DISTRIBUTION"
+echo "Ready to create: $DOCKER_REPOSITORY:$PHP_DOCKER_TAG"
+
+#TAGS=$(get_tag_aliases "$DOCKER_REPOSITORY" "$PS_VERSION" "$PHP_FLAVOUR")
+#echo "$TAGS"
+
+#docker buildx build \
+#  --platform "$BUILDPLATFORM"
+#  -f docker/"${LINUX_DISTRIBUTION}"-base.Dockerfile \
+#  --build-arg PHP_DOCKER_TAG="${PHP_DOCKER_TAG}" \
+#  --build-arg PS_VERSION="${PS_VERSION}" \
+#  "$TAGS" \
+#  .
+
+# --------------------------------
 ## TODO:
-#  - penser au docker login avant -> docker login -u "$USER" -p "$PASSWORD" "$REGISTRY" ou Action Github
 #  - [x] check here if php=$PHP_DOCKER_TAG exists
-#  - Check if image already exists on Docker Hub before pushing ?
 #  - Check if release exists before ?
 
 ## Specific version
@@ -65,12 +127,8 @@ fi
 ## Nightly
 #git clone 'https://github.com/PrestaShop/PrestaShop.git'
 
-#TAGS=$(get_tag_aliases $PS_VERSION $PS)
-#
-## --platform linux/amd64,linux/arm64,linux/arm
-#docker buildx build \
-#  -f docker/${LINUX_DISTRIBUTION}-base.Dockerfile \
-#  --build-arg PHP_DOCKER_TAG=${PHP_DOCKER_TAG} \
-#  --build-arg PS_VERSION=${PS_VERSION} \
-#  $TAGS \
-#  .
+function check_if_image_exists {
+  DOCKER_IMAGE=$1
+  docker manifest inspect "$DOCKER_IMAGE" >/dev/null
+  echo $?
+}
