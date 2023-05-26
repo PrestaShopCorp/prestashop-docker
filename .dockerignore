@@ -1,4 +1,5 @@
 .git
 docker-compose.yml
 Dockerfile
+*.Dockerfile
 *.md
