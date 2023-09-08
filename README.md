@@ -41,6 +41,12 @@ Available env vars:
 
 > Note: default debian distribution is set to Debian 11 Bullseye.
 
+## Update
+
+If you want to add a new version of PrestaShop, you should edit the:
+- (prestashop-versions.json)[prestashop-versions.json] to add the new version with PHP recommended & compatibles version
+- (prestashop-tags.json)[prestashop-tags.json]
+
 ---
 
 # WIP: Notes
