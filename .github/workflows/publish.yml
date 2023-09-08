@@ -3,10 +3,15 @@ name: Publish containers
 
 on:
   push:
-    branches: master
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+# TODO: nightly -> cron ?
 
 env:
   REGISTRY: docker.io
+  TARGET_PLATFORMS: 'linux/amd64,linux/arm64,linux/arm'
 
 jobs:
   publish:
@@ -22,7 +27,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
         with:
           use: true
-#          platforms: ${{ env.TARGET_PLATFORMS }}
+          platforms: ${{ env.TARGET_PLATFORMS }}
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -33,11 +38,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-#      - name: Install dependencies
-#        run: apt install jq
+      - name: Install dependencies
+        shell: bash
+        run: apt install jq curl
 
       - name: Build Docker images
-        run: echo "WIP"
+        shell: bash
+        run: ./build.sh
 
       - name: Push Docker images
-        run: echo "WIP"
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: bash
+        run: |
+          echo "WIP"
+          docker image ls

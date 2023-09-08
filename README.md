@@ -31,7 +31,7 @@ prestashop/prestashop:8.0.1-8.1-apache
 Available env vars:
 
 | Env var                | Description                                                                         | Default                            |
-| ---------------------- | ----------------------------------------------------------------------------------- | ---------------------------------- |
+|------------------------|-------------------------------------------------------------------------------------|------------------------------------|
 | **BUILDPLATFORM**      | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
 | **LINUX_DISTRIBUTION** | `debian` or `alpine`                                                                | `debian`                           |
 | **PHP_VERSION**        | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
@@ -44,6 +44,7 @@ Available env vars:
 ## Update
 
 If you want to add a new version of PrestaShop, you should edit the:
+
 - (prestashop-versions.json)[prestashop-versions.json] to add the new version with PHP recommended & compatibles version
 - (prestashop-tags.json)[prestashop-tags.json]
 
@@ -60,7 +61,7 @@ docker run --port 80:80 --detach --name prestashop prestashop/prestashop:8.0.1
 ### Exemple: je release PrestaShop "8.0.1"
 
 | TAGS             | What's In        | Alias to         |
-| ---------------- | ---------------- | ---------------- |
+|------------------|------------------|------------------|
 | 8.0.1            | apache + php 8.1 | 8.0.1-8.1-apache |
 | 8.0.1-apache     | apache + php 8.1 | 8.0.1-8.1-apache |
 | 8.0.1-8.1        | apache + php 8.1 | 8.0.1-8.1-apache |
