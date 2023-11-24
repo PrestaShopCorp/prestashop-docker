@@ -11,28 +11,28 @@ on:
 
 env:
   REGISTRY: docker.io
-  TARGET_PLATFORMS: 'linux/amd64,linux/arm64,linux/arm'
+  PLATFORM: 'linux/amd64,linux/arm64'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker BuildX
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           use: true
-          platforms: ${{ env.TARGET_PLATFORMS }}
+          platforms: ${{ env.PLATFORM }}
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}

@@ -1,10 +1,11 @@
 ARG PS_VERSION
-ARG PHP_DOCKER_TAG
+ARG PHP_VERSION
+ARG PHP_FLAVOUR
 
 # ==================================
 # Stage 1/3: PHP base configuration
 # ==================================
-FROM php:${PHP_DOCKER_TAG} AS debian-base-prestashop
+FROM php:${PHP_FLAVOUR} AS debian-base-prestashop
 ARG PS_VERSION
 
 ENV PS_DOMAIN="<to be defined>" \

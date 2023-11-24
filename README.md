@@ -30,14 +30,14 @@ prestashop/prestashop:8.0.1-8.1-apache
 
 Available env vars:
 
-| Env var                | Description                                                                         | Default                            |
-|------------------------|-------------------------------------------------------------------------------------|------------------------------------|
-| **BUILDPLATFORM**      | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
-| **LINUX_DISTRIBUTION** | `debian` or `alpine`                                                                | `debian`                           |
-| **PHP_VERSION**        | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
-| **PHP_FLAVOUR**        | `fpm`, `apache` or `zts`                                                            | `apache`                           |
-| **PS_VERSION**         | PrestaShop version                                                                  | `latest`                           |
-| **DOCKER_REPOSITORY**  | the Docker image repository                                                         | `prestashop/prestashop`            |
+| Env var               | Description                                                                         | Default                            |
+|-----------------------|-------------------------------------------------------------------------------------|------------------------------------|
+| **PLATFORM**          | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
+| **OS_FLAVOUR**        | `debian` or `alpine`                                                                | `debian`                           |
+| **PHP_VERSION**       | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
+| **PHP_FLAVOUR**       | `fpm`, `apache` or `zts`                                                            | `apache`                           |
+| **PS_VERSION**        | PrestaShop version                                                                  | `latest`                           |
+| **DOCKER_REPOSITORY** | the Docker image repository                                                         | `prestashop/prestashop`            |
 
 > Note: default debian distribution is set to Debian 11 Bullseye.
 

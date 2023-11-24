@@ -1,0 +1,34 @@
+{
+  "7.1": {
+    "alpine": "7.1-fpm-alpine",
+    "debian": "7.1-fpm-buster"
+  },
+  "7.2": {
+    "alpine": "7.2-fpm-alpine",
+    "debian": "7.2-fpm-buster"
+  },
+  "7.3": {
+    "alpine": "7.3-fpm-alpine",
+    "debian": "7.3-fpm-buster"
+  },
+  "7.4": {
+    "alpine": "7.4-fpm-alpine",
+    "debian": "7.4-fpm-buster"
+  },
+  "8.0": {
+    "alpine": "8.0-fpm-alpine",
+    "debian": "8.0-fpm-bullseye"
+  },
+  "8.1": {
+    "alpine": "8.1-fpm-alpine",
+    "debian": "8.1-fpm-bookworm"
+  },
+  "8.2": {
+    "alpine": "8.2-fpm-alpine",
+    "debian": "8.2-fpm-bookworm"
+  },
+  "8.3": {
+    "alpine": "8.3-fpm-alpine",
+    "debian": "8.3-fpm-bookworm"
+  }
+}

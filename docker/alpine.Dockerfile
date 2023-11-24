@@ -1,7 +1,7 @@
 ARG PS_VERSION
-ARG PHP_DOCKER_TAG
+ARG PHP_FLAVOUR
 
-FROM php:${PHP_DOCKER_TAG} AS alpine-base-prestashop
+FROM php:${PHP_FLAVOUR} AS alpine-base-prestashop
 ARG PS_VERSION
 ARG PS_FOLDER=/var/www/html
 
@@ -19,7 +19,7 @@ RUN \
 ENV GD_DEPS="zlib-dev libjpeg-turbo-dev libpng-dev"
 ENV ZIP_DEPS="libzip-dev"
 ENV INTL_DEPS="icu-dev"
-RUN apk add -U $GD_DEPS $ZIP_DEPS $INTL_DEPS \
+RUN apk add -U "$GD_DEPS" "$ZIP_DEPS" "$INTL_DEPS" \
   && docker-php-ext-configure gd --with-jpeg \
   && docker-php-ext-install gd pdo_mysql zip intl;
 #   docker-php-ext-enable opcache
