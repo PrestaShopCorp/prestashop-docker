@@ -112,7 +112,7 @@ if [ ! -f ./config/settings.inc.php ] && [ ! -f ./install.lock ]; then
 elif [ -f ./install.lock ]; then
     if [ -f ./config/settings.inc.php ]; then
         echo "\n* Shop seems setup but remaining install lock still present..."
-    else 
+    else
         echo "\n* Another setup is currently running..."
     fi
     sleep 10

@@ -36,7 +36,7 @@ if (!defined('_PS_VERSION_'))
 $domain = Tools::getHttpHost();
 $old_domain = Configuration::get('PS_SHOP_DOMAIN');
 
-if (version_compare(_PS_VERSION_, '1.5', '>=') && $domain != $old_domain && !Shop::isFeatureActive())
+if $domain != $old_domain && !Shop::isFeatureActive())
 {
 	$url = ShopUrl::getShopUrls(Configuration::get('PS_SHOP_DEFAULT'))->where('main', '=', 1)->getFirst();
 	if ($url)

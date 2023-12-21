@@ -173,5 +173,4 @@ docker buildx build \
   --label org.opencontainers.image.created="$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")" \
   "${TARGET_IMAGES[@]}" \
   "$([ "${PUSH}" == "true" ] && echo "--push" || echo "--load")" \
-  ./docker
-
+  .

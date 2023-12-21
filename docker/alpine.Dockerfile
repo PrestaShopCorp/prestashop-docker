@@ -7,92 +7,94 @@ ARG PHP_FLAVOUR
 # ==================================
 FROM php:${PHP_FLAVOUR} AS alpine-base-prestashop
 ARG PS_VERSION
-ARG PS_FOLDER=/var/www/html
+
+ENV PS_DOMAIN="<to be defined>" \
+DB_SERVER="<to be defined>" \
+DB_PORT=3306 \
+DB_NAME=prestashop \
+DB_USER=root \
+DB_PASSWD=admin \
+DB_PREFIX=ps_ \
+ADMIN_MAIL=demo@prestashop.com \
+ADMIN_PASSWD=prestashop_demo \
+PS_LANGUAGE=en \
+PS_COUNTRY=GB \
+PS_ALL_LANGUAGES=0 \
+PS_INSTALL_AUTO=0 \
+PS_ERASE_DB=0 \
+PS_INSTALL_DB=0 \
+PS_DEV_MODE=0 \
+PS_HOST_MODE=0 \
+PS_DEMO_MODE=0 \
+PS_ENABLE_SSL=0 \
+PS_HANDLE_DYNAMIC_DOMAIN=0 \
+PS_FOLDER_ADMIN=admin \
+PS_FOLDER_INSTALL=install \
+PHP_ENV=production
+
+# The PHP configuration script
+COPY ./assets/php-configuration.sh /tmp/
 
 # Install base tools
 RUN \
   apk --no-cache add -U \
-  bash less vim geoip git tzdata zip curl \
-  nginx nginx-mod-http-headers-more nginx-mod-http-geoip \
-  nginx-mod-stream nginx-mod-stream-geoip ca-certificates \
-  libmcrypt gnu-libiconv-libs php81-common && \
-  rm -rf /var/cache/apk/*
-
-# Install PHP requirements
-# see: https://olvlvl.com/2019-06-install-php-ext-source
-ENV GD_DEPS="zlib-dev libjpeg-turbo-dev libpng-dev"
-ENV ZIP_DEPS="libzip-dev"
-ENV INTL_DEPS="icu-dev"
-RUN apk --no-cache add -U $GD_DEPS $ZIP_DEPS $INTL_DEPS \
-  && docker-php-ext-configure gd --with-jpeg \
-  && docker-php-ext-install gd pdo_mysql zip intl;
-#   docker-php-ext-enable opcache
-
-RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include
-RUN docker-php-ext-install iconv intl pdo_mysql mbstring soap gd zip bcmath
-
-RUN docker-php-source extract \
-    && if [ -d "/usr/src/php/ext/mysql" ]; then docker-php-ext-install mysql; fi \
-    && if [ -d "/usr/src/php/ext/mcrypt" ]; then docker-php-ext-install mcrypt; fi \
-    && if [ -d "/usr/src/php/ext/opcache" ]; then docker-php-ext-install opcache; fi \
-    && docker-php-source delete
+    ca-certificates geoip tzdata zip curl jq make \
+    gnu-libiconv php-common mariadb-client oniguruma-dev \
+    zlib-dev libzip-dev libjpeg-turbo-dev libpng-dev \
+    icu-dev libmcrypt-dev libxml2 libxml2-dev \
+  && /tmp/php-configuration.sh \
+  && apk del make \
+  && rm -rf /var/cache/apk/*
 
 # The PrestaShop docker entrypoint
-COPY config_files/docker_run.sh /tmp/
+COPY ./assets/docker_run.sh /tmp/
 
 # Handling a dynamic domain
-COPY config_files/docker_updt_ps_domains.php /tmp/
+# Probably, or at least its usage must be described in the README file
+# COPY ./assets/docker_updt_ps_domains.php /tmp/
 
 # PHP env for dev / demo modes
-COPY config_files/defines_custom.inc.php /tmp/
-RUN chown www-data:www-data /tmp/defines_custom.inc.php
+# COPY ./assets/defines_custom.inc.php /tmp/
+# RUN chown www-data:www-data /tmp/defines_custom.inc.php
 
 # Apache configuration
-RUN if [ -x "$(command -v apache2-foreground)" ]; then a2enmod rewrite; fi
-
-# PHP configuration
-COPY config_files/php.ini /usr/local/etc/php/
-
-# @TODO check opcache
-# RUN echo '\
-#   opcache.interned_strings_buffer=16\n\
-#   opcache.load_comments=Off\n\
-#   opcache.max_accelerated_files=16000\n\
-#   opcache.save_comments=Off\n\
-#   ' >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
-
-# Disable IPv6
-# RUN echo "net.ipv6.conf.all.disable_ipv6 = 1" | tee /etc/sysctl.conf
+RUN if [ -x "$(command -v apache2-foreground)" ]; then \
+    a2enmod rewrite;\
+    fi
 
 # =========================================
 # Stage 2/3: PrestaShop sources downloader
 # =========================================
 FROM alpine-base-prestashop AS alpine-download-prestashop
 ARG PS_VERSION
+ENV PS_FOLDER=/tmp/prestashop
 
-RUN apk --no-cache add -U git jq make
-
+# Get PrestaShop source code
 RUN if [[ "$PS_VERSION" == "nightly" ]]; then \
-    git clone --depth 1 'https://github.com/PrestaShop/PrestaShop.git' /tmp/prestashop; \
-    rm -rf /tmp/prestashop/.git; \
-    make install; \
+    echo "Unsupported yet: https://prestashop.slack.com/archives/C03LFE4KV6K/p1703170152828039" \
+    && exit 1; \
   else \
-    DOWNLOAD_URL=$(curl -s -L --request GET 'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.assets[] | select(.name | contains(".zip")) | .browser_download_url'); \
-    curl -s -L -o /tmp/prestashop.zip "${DOWNLOAD_URL}"; \
-    unzip -n -q /tmp/prestashop.zip -d /tmp/prestashop; \
+    curl -s -L -o /tmp/prestashop.zip "https://github.com/PrestaShop/PrestaShop/releases/download/${PS_VERSION}/prestashop_${PS_VERSION}.zip"; \
   fi
+
+# Extract the souces
+RUN mkdir -p "$PS_FOLDER" /tmp/unzip-ps \
+  && unzip -n -q /tmp/prestashop.zip -d /tmp/unzip-ps \
+  && ([ -f /tmp/unzip-ps/prestashop.zip ] \
+    && unzip -n -q /tmp/unzip-ps/prestashop.zip -d "$PS_FOLDER" \
+    || mv /tmp/unzip-ps/prestashop/* "$PS_FOLDER")
 
 # ============================
 # Stage 3/3: Production image
 # ============================
 FROM alpine-base-prestashop
-ARG PS_FOLDER=/var/www/html
+ARG PS_FOLDER=/var/www/html/prestashop
 
 LABEL maintainer="PrestaShop Core Team <coreteam@prestashop.com>"
 
 ENV PS_VERSION $PS_VERSION
 
 # Copy the PrestaShop sources
-COPY --chown=www-data:www-data --from=alpine-download-prestashop /tmp/prestashop ${PS_FOLDER}/prestashop
+COPY --chown=www-data:www-data --from=alpine-download-prestashop /tmp/prestashop ${PS_FOLDER}
 
 CMD ["/tmp/docker_run.sh"]
