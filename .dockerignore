@@ -1,5 +1,5 @@
 .git
-docker-compose.yml
-Dockerfile
+.github
 *.Dockerfile
 *.md
+.editorconfig
