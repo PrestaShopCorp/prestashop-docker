@@ -1,5 +1,4 @@
-.git
-.github
-*.Dockerfile
-*.md
-.editorconfig
+*
+!./assets
+!./php-flavours.json
+!./prestashop-versions.json

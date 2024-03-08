@@ -55,7 +55,7 @@ If you want to add a new version of PrestaShop, you should edit the:
 ## How to use
 
 ```sh
-docker run --port 80:80 --detach --name prestashop prestashop/prestashop:8.0.1
+docker run -p 80:80 --detach --name prestashop prestashop/prestashop:latest
 ```
 
 ### Exemple: je release PrestaShop "8.0.1"
