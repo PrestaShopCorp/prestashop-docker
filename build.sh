@@ -1,41 +1,39 @@
 #!/bin/bash
 set -e
+cd "$(dirname "$0")"
 
 # Available variables
 # -------------------
-declare PLATFORM;        # -- a comma separated list of target platforms (defaults to "linux/amd64")
-declare OS_FLAVOUR;      # -- either "debian" (default) or "alpine"
-declare PHP_VERSION;     # -- PHP version, defaults to recommended version for PrestaShop
-declare PHP_FLAVOUR;     # -- PHP flavour, defaults apache
 declare PS_VERSION;      # -- PrestaShop version, defaults to latest
+declare PHP_VERSION;     # -- PHP version, defaults to recommended version for PrestaShop
+declare OS_FLAVOUR;      # -- either "alpine" (default) or "debian"
+declare SERVER_FLAVOUR;  # -- not implemented, either "nginx" (default) or "apache"
+declare TARGET_PLATFORM; # -- a comma separated list of target platforms (defaults to "linux/amd64")
+declare PLATFORM;        # -- alias for $TARGET_PLATFORM
 declare TARGET_IMAGE;    # -- docker image name, defaults to "prestashop/prestashop-flashlight"
 declare PUSH;            # -- set it to "true" if you want to push the resulting image
+declare ZIP_SOURCE;      # -- the zip to unpack in flashlight
+declare DRY_RUN;         # -- if used, won't really build the image. Useful to check tags compliance
 
 # Static configuration
 # --------------------
 DEFAULT_OS="debian";
 DEFAULT_SERVER="apache";
 DEFAULT_DOCKER_IMAGE=prestashop/prestashop
-DEFAULT_PLATFORM=linux/amd64
+DEFAULT_PLATFORM=$(docker system info --format '{{.OSType}}/{{.Architecture}}')
 GIT_SHA=$(git rev-parse HEAD)
+TARGET_PLATFORM="${TARGET_PLATFORM:-${PLATFORM:-$DEFAULT_PLATFORM}}"
 
 error() {
   echo -e "\e[1;31m${1:-Unknown error}\e[0m"
   exit "${2:-1}"
 }
 
-# Get latest version of PrestaShop (via GitHub)
 get_latest_prestashop_version() {
-  curl --silent --location --request GET \
-   'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
+  curl --silent --show-error --fail --location --request GET \
+    'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
 }
 
-# Get recommended PHP version from `prestashop-versions.json`
-#
-# $1 - PrestaShop version
-#
-# Examples:
-# - get_recommended_php_version "8.0.4"
 get_recommended_php_version() {
   local PS_VERSION=$1;
   local RECOMMENDED_VERSION=;
@@ -96,6 +94,7 @@ get_php_version() {
 #
 # if the build is for the latest image of the default OS with the recommended PHP version, these tags will be like:
 # * latest
+# * php-8.2
 # * 8.1.1
 # * 8.1.1-8.2
 # * 8.1.1-8.2-alpine
@@ -134,37 +133,36 @@ if [ "$PHP_FLAVOUR" == "null" ]; then
   error "Could not find a PHP flavour for $OS_FLAVOUR + $SERVER_FLAVOUR + $PHP_VERSION" 2;
 fi
 if [ -z "${TARGET_IMAGE:+x}" ]; then
-  read -ra TARGET_IMAGES <<<"$(get_target_images "$PHP_FLAVOUR" "$PS_VERSION" "$PHP_VERSION" "$OS_FLAVOUR" "$LATEST")"
+  read -ra TARGET_IMAGES <<<"$(get_target_images "$PHP_FLAVOUR" "$PS_VERSION" "$PHP_VERSION" "$OS_FLAVOUR")"
 else
   read -ra TARGET_IMAGES <<<"-t $TARGET_IMAGE"
 fi
-
-#if [[ "$PS_VERSION" == "nightly" ]]; then
-#  TAGS="--tag $TARGET_IMAGE:nightly";
-#  echo "Ready to create: $TARGET_IMAGE:nightly"
-#else
-#  TAGS="--tag $TARGET_IMAGE:$PS_VERSION-$PHP_FLAVOUR --tag $TARGET_IMAGE:latest";
-#  echo "Ready to create: $TARGET_IMAGE:$PS_VERSION-$PHP_FLAVOUR"
-#fi
-
-# Info
-# ----------------------
-echo "🐳 Use $DEFAULT_DOCKER_IMAGE"
-echo "Use PrestaShop $PS_VERSION with PHP $PHP_VERSION on $OS_FLAVOUR"
+if [ "$PS_VERSION" == "nightly" ]; then
+  ZIP_SOURCE="https://storage.googleapis.com/prestashop-core-nightly/nightly.zip"
+else
+  ZIP_SOURCE="https://github.com/PrestaShop/PrestaShop/releases/download/${PS_VERSION}/prestashop_${PS_VERSION}.zip"
+fi
 
 # Build the docker image
 # ----------------------
 CACHE_IMAGE=${TARGET_IMAGES[1]}
+if [ -n "${DRY_RUN}" ]; then
+  docker() {
+    echo docker "$@"
+  }
+fi
 docker pull "$CACHE_IMAGE" 2> /dev/null || true
 docker buildx build \
+  --progress=plain \
   --file "./docker/${OS_FLAVOUR}.Dockerfile" \
-  --platform "${PLATFORM:-$DEFAULT_PLATFORM}" \
-  --build-arg PHP_VERSION="$PHP_VERSION" \
-  --build-arg PHP_FLAVOUR="$PHP_FLAVOUR" \
-  --build-arg PS_VERSION="$PS_VERSION" \
-  --build-arg GIT_SHA="$GIT_SHA" \
+  --platform "$TARGET_PLATFORM" \
   --cache-from type=registry,ref="$CACHE_IMAGE" \
   --cache-to type=inline \
+  --build-arg PHP_FLAVOUR="$PHP_FLAVOUR" \
+  --build-arg PS_VERSION="$PS_VERSION" \
+  --build-arg PHP_VERSION="$PHP_VERSION" \
+  --build-arg GIT_SHA="$GIT_SHA" \
+  --build-arg ZIP_SOURCE="$ZIP_SOURCE" \
   --label org.opencontainers.image.title="PrestaShop" \
   --label org.opencontainers.image.description="PrestaShop docker image" \
   --label org.opencontainers.image.source=https://github.com/PrestaShop/docker \
