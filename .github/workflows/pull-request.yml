@@ -32,6 +32,7 @@ jobs:
     name: "Docker build: ${{ matrix.os_flavour }} for ${{ matrix.ps_version }} with ${{ matrix.server_flavour }}"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false # TODO: Test only should be removed
       matrix:
         os_flavour: ["alpine", "debian"]
         ps_version: ["1.6.1.24", "1.7.8.10", "8.1.5"]
