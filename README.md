@@ -35,7 +35,7 @@ Available env vars:
 | **PLATFORM**          | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
 | **OS_FLAVOUR**        | `debian` or `alpine`                                                                | `debian`                           |
 | **PHP_VERSION**       | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
-| **PHP_FLAVOUR**       | `fpm`, `apache` or `zts`                                                            | `apache`                           |
+| **PHP_FLAVOUR**       | `fpm`, `apache` or `nginx`                                                          | `apache`                           |
 | **PS_VERSION**        | PrestaShop version                                                                  | `latest`                           |
 | **DOCKER_REPOSITORY** | the Docker image repository                                                         | `prestashop/prestashop`            |
 
@@ -45,7 +45,7 @@ Available env vars:
 
 If you want to add a new version of PrestaShop, you should edit the:
 
-- (prestashop-versions.json)[prestashop-versions.json] to add the new version with PHP recommended & compatibles version
+- (prestashop-versions.json)[prestashop-versions.json] to add the new version with a PHP recommended & compatibles version
 - (prestashop-tags.json)[prestashop-tags.json]
 
 ---

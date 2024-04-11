@@ -1,6 +1,7 @@
 ARG PS_VERSION
 ARG PHP_VERSION
 ARG PHP_FLAVOUR
+ARG SERVER_FLAVOUR
 ARG GIT_SHA
 ARG ZIP_SOURCE
 
@@ -9,7 +10,6 @@ ARG ZIP_SOURCE
 # ==================================
 FROM php:${PHP_FLAVOUR} AS alpine-base-prestashop
 ARG PS_VERSION
-ARG PHP_VERSION
 
 ENV PS_DOMAIN="<to be defined>" \
   DB_SERVER="<to be defined>" \
@@ -52,6 +52,12 @@ RUN \
 # The PrestaShop docker entrypoint
 COPY ./assets/docker_run.sh /tmp/
 
+RUN if [[ ${SERVER_FLAVOUR} = *"fpm"* ]]; \
+     then  sed 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
+    else \
+     sed 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
+    fi
+
 # Handling a dynamic domain
 # Probably, or at least its usage must be described in the README file
 # COPY ./assets/docker_updt_ps_domains.php /tmp/
@@ -72,6 +78,7 @@ FROM alpine-base-prestashop AS alpine-download-prestashop
 ARG PS_VERSION
 ARG GIT_SHA
 ARG PHP_VERSION
+ARG SERVER_FLAVOUR
 ARG PS_FOLDER=/var/www/html
 ARG ZIP_SOURCE
 
@@ -91,10 +98,11 @@ RUN mkdir -p "$PS_FOLDER" /tmp/unzip-ps \
 # Ship a VERSION file
 RUN echo "PrestaShop $PS_VERSION" > "$PS_FOLDER/VERSION" \
   && echo "PHP $PHP_VERSION" >> "$PS_FOLDER/VERSION" \
-  && echo "Flashlight $GIT_SHA" >> "$PS_FOLDER/VERSION"
+  && echo "Server $SERVER_FLAVOUR" >> "$PS_FOLDER/VERSION" \
+  && echo "Git SHA $GIT_SHA" >> "$PS_FOLDER/VERSION" \
 
 # Adds a robots.txt file
-ADD ./assets/robots.txt $PS_FOLDER
+COPY ./assets/robots.txt $PS_FOLDER
 
 # ============================
 # Stage 3/3: Production image

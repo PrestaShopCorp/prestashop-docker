@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 declare PS_VERSION;      # -- PrestaShop version, defaults to latest
 declare PHP_VERSION;     # -- PHP version, defaults to recommended version for PrestaShop
 declare OS_FLAVOUR;      # -- either "alpine" (default) or "debian"
-declare SERVER_FLAVOUR;  # -- not implemented, either "nginx" (default) or "apache"
+declare SERVER_FLAVOUR;  # -- either "apache" (default), "fpm" (no web server) or "nginx"
 declare TARGET_PLATFORM; # -- a comma separated list of target platforms (defaults to "linux/amd64")
 declare PLATFORM;        # -- alias for $TARGET_PLATFORM
 declare TARGET_IMAGE;    # -- docker image name, defaults to "prestashop/prestashop-flashlight"
@@ -69,7 +69,7 @@ get_php_flavour() {
    local OS_FLAVOUR=${1:-};
    local SERVER_FLAVOUR=${2:-};
    local PHP_VERSION=${3:-};
-   jq -r '."'"${PHP_VERSION}"'".'"${OS_FLAVOUR}" <php-flavours.json;
+   jq -r '."'"${PHP_VERSION}"'"."'"${OS_FLAVOUR}"'".'"${SERVER_FLAVOUR}" < php-flavours.json;
 }
 
 get_ps_version() {
@@ -129,14 +129,17 @@ fi
 OS_FLAVOUR=${OS_FLAVOUR:-$DEFAULT_OS};
 SERVER_FLAVOUR=${SERVER_FLAVOUR:-$DEFAULT_SERVER};
 PHP_FLAVOUR=$(get_php_flavour "$OS_FLAVOUR" "$SERVER_FLAVOUR" "$PHP_VERSION");
+
 if [ "$PHP_FLAVOUR" == "null" ]; then
   error "Could not find a PHP flavour for $OS_FLAVOUR + $SERVER_FLAVOUR + $PHP_VERSION" 2;
 fi
+
 if [ -z "${TARGET_IMAGE:+x}" ]; then
   read -ra TARGET_IMAGES <<<"$(get_target_images "$PHP_FLAVOUR" "$PS_VERSION" "$PHP_VERSION" "$OS_FLAVOUR")"
 else
   read -ra TARGET_IMAGES <<<"-t $TARGET_IMAGE"
 fi
+
 if [ "$PS_VERSION" == "nightly" ]; then
   ZIP_SOURCE="https://storage.googleapis.com/prestashop-core-nightly/nightly.zip"
 else
@@ -159,6 +162,7 @@ docker buildx build \
   --cache-from type=registry,ref="$CACHE_IMAGE" \
   --cache-to type=inline \
   --build-arg PHP_FLAVOUR="$PHP_FLAVOUR" \
+  --build-arg SERVER_FLAVOUR="$SERVER_FLAVOUR" \
   --build-arg PS_VERSION="$PS_VERSION" \
   --build-arg PHP_VERSION="$PHP_VERSION" \
   --build-arg GIT_SHA="$GIT_SHA" \

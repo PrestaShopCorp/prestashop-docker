@@ -1,34 +1,98 @@
 {
   "7.1": {
-    "alpine": "7.1-fpm-alpine",
-    "debian": "7.1-fpm-buster"
+    "alpine": {
+      "fpm": "7.1-fpm-alpine",
+      "nginx": "7.1-fpm-alpine",
+      "apache": "7.1-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "7.1-fpm-buster",
+      "nginx": "7.1-fpm-buster",
+      "apache": "7.1-apache-buster"
+    }
   },
   "7.2": {
-    "alpine": "7.2-fpm-alpine",
-    "debian": "7.2-fpm-buster"
+    "alpine": {
+      "fpm": "7.2-fpm-alpine",
+      "nginx": "7.2-fpm-alpine",
+      "apache": "7.2-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "7.2-fpm-buster",
+      "nginx": "7.2-fpm-buster",
+      "apache": "7.2-apache-buster"
+    }
   },
   "7.3": {
-    "alpine": "7.3-fpm-alpine",
-    "debian": "7.3-fpm-buster"
+    "alpine": {
+      "fpm": "7.3-fpm-alpine",
+      "nginx": "7.3-fpm-alpine",
+      "apache": "7.3-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "7.3-fpm-buster",
+      "nginx": "7.3-fpm-buster",
+      "apache": "7.3-apache-buster"
+    }
   },
   "7.4": {
-    "alpine": "7.4-fpm-alpine",
-    "debian": "7.4-fpm-buster"
+    "alpine": {
+      "fpm": "7.4-fpm-alpine",
+      "nginx": "7.4-fpm-alpine",
+      "apache": "7.4-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "7.4-fpm-buster",
+      "nginx": "7.4-fpm-buster",
+      "apache": "7.4-apache-buster"
+    }
   },
   "8.0": {
-    "alpine": "8.0-fpm-alpine",
-    "debian": "8.0-fpm-bullseye"
+    "alpine": {
+      "fpm": "8.0-fpm-alpine",
+      "nginx": "8.0-fpm-alpine",
+      "apache": "8.0-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "8.0-fpm-bullseye",
+      "nginx": "8.0-fpm-bullseye",
+      "apache": "8.0-apache-bullseye"
+    }
   },
   "8.1": {
-    "alpine": "8.1-fpm-alpine",
-    "debian": "8.1-fpm-bookworm"
+    "alpine": {
+      "fpm": "8.1-fpm-alpine",
+      "nginx": "8.1-fpm-alpine",
+      "apache": "8.1-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "8.1-fpm-bookworm",
+      "nginx": "8.1-fpm-bookworm",
+      "apache": "8.1-apache-bookworm"
+    }
   },
   "8.2": {
-    "alpine": "8.2-fpm-alpine",
-    "debian": "8.2-fpm-bookworm"
+    "alpine": {
+      "fpm": "8.2-fpm-alpine",
+      "nginx": "8.2-fpm-alpine",
+      "apache": "8.2-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "8.2-fpm-bookworm",
+      "nginx": "8.2-fpm-bookworm",
+      "apache": "8.2-apache-bookworm"
+    }
   },
   "8.3": {
-    "alpine": "8.3-fpm-alpine",
-    "debian": "8.3-fpm-bookworm"
+    "alpine": {
+      "fpm": "8.3-fpm-alpine",
+      "nginx": "8.3-fpm-alpine",
+      "apache": "8.3-fpm-alpine"
+    },
+    "debian": {
+      "fpm": "8.3-fpm-bookworm",
+      "nginx": "8.3-fpm-bookworm",
+      "apache": "8.3-apache-bookworm"
+    }
   }
 }
