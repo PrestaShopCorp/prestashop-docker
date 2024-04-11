@@ -63,9 +63,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY ./assets/docker_run.sh /tmp/
 
 RUN if [ "$SERVER_FLAVOUR" = "fpm" ]; \
-     then  sed 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
+     then sed -i 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
     else \
-     sed 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
+     sed -i 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
     fi
 
 
