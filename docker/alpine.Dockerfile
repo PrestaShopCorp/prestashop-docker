@@ -52,7 +52,7 @@ RUN \
 # The PrestaShop docker entrypoint
 COPY ./assets/docker_run.sh /tmp/
 
-RUN if [[ ${SERVER_FLAVOUR} = *"fpm"* ]]; \
+RUN if [ "$SERVER_FLAVOUR" = "fpm" ]; \
      then  sed 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
     else \
      sed 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \

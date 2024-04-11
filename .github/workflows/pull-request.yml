@@ -29,7 +29,7 @@ jobs:
           dockerfile: "*.Dockerfile"
 
   docker_build:
-    name: "Docker build: ${{ matrix.os_flavour }} for ${{ matrix.ps_version }}"
+    name: "Docker build: ${{ matrix.os_flavour }} for ${{ matrix.ps_version }} with ${{ matrix.server_flavour }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
