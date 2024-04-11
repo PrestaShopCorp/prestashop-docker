@@ -10,6 +10,7 @@ ARG ZIP_SOURCE
 # ==================================
 FROM php:${PHP_FLAVOUR} AS debian-base-prestashop
 ARG PS_VERSION
+ARG SERVER_FLAVOUR
 
 ENV PS_DOMAIN="<to be defined>" \
   DB_SERVER="<to be defined>" \
@@ -61,16 +62,16 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 
 # see: https://github.com/docker-library/php/blob/master/8.3/bullseye/apache/apache2-foreground
 RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
-    export DEBIAN_FRONTEND=noninteractive \
-      && apt-get update \
-      && apt-get install --no-install-recommends -qqy \
-        apache2 \
-        apache2-proxy \
-        apache2-utils \
+  export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install --no-install-recommends -qqy \
+      apache2 \
+      apache2-proxy \
+      apache2-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-   wget -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground" \
-  chmod +x /usr/local/bin/apache2-foreground \
+  wget -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground"; \
+  chmod +x /usr/local/bin/apache2-foreground; \
 fi
 
 # The PrestaShop docker entrypoint

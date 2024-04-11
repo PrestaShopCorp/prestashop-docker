@@ -10,6 +10,7 @@ ARG ZIP_SOURCE
 # ==================================
 FROM php:${PHP_FLAVOUR} AS alpine-base-prestashop
 ARG PS_VERSION
+ARG SERVER_FLAVOUR
 
 ENV PS_DOMAIN="<to be defined>" \
   DB_SERVER="<to be defined>" \
@@ -51,22 +52,14 @@ RUN \
 
 RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
     apk --no-cache add -U apache2 apache2-proxy apache2-tools; \
-    echo -e '\
-#!/bin/sh\
-# Only for Alpine linux, not supporting this file by default\
-php-fpm -D\
-/usr/sbin/httpd -D FOREGROUND\
- '> /usr/bin/apache-foreground; \
+    printf '\
+#!/bin/sh\n\
+# Only for Alpine linux, not supporting this file by default\n\
+php-fpm -D\n\
+/usr/sbin/httpd -D FOREGROUND\n\
+ ' > /usr/bin/apache-foreground; \
   chmod +x /usr/bin/apache-foreground; \
 fi
-
-# https://stackoverflow.com/a/68349357
-# RUN <<EOF cat > /home/docker/.bashrc
-# Virtualenvwrapper configuration.
-# export WORKON_HOME=\$HOME/.virtualenvs
-# export PROJECT_HOME=\$HOME/Devel
-# source /usr/local/bin/virtualenvwrapper.sh
-# EOF
 
 # The PrestaShop docker entrypoint
 COPY ./assets/docker_run.sh /tmp/
