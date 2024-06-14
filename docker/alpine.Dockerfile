@@ -42,7 +42,7 @@ COPY ./assets/php-configuration.sh /tmp/
 # Install base tools
 RUN \
   apk --no-cache add -U \
-  ca-certificates geoip tzdata zip curl jq make \
+  ca-certificates geoip tzdata zip curl jq make fcgi \
   gnu-libiconv php-common mariadb-client oniguruma-dev \
   zlib-dev libzip-dev libjpeg-turbo-dev libpng-dev \
   icu-dev libmcrypt-dev libxml2 libxml2-dev \
@@ -59,16 +59,52 @@ php-fpm -D\n\
 /usr/sbin/httpd -D FOREGROUND\n\
  ' > /usr/bin/apache-foreground; \
   chmod +x /usr/bin/apache-foreground; \
+elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+    apk --no-cache add -U nginx nginx-mod-http-headers-more nginx-mod-http-geoip \
+    nginx-mod-stream nginx-mod-stream-geoip; \
+    printf '\
+#!/bin/sh\n\
+php-fpm -D\n\
+nginx -g "daemon off;"\n\
+ ' > /usr/bin/nginx-foreground; \
+    chmod +x /usr/bin/nginx-foreground; \
 fi
+
+## Healthcheck
+RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
+    printf '\
+    #!/bin/sh\n\
+    curl -Isf http://localhost:80/robots.txt || exit 1' > /tmp/healthcheck; \
+  elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+    printf '\
+    #!/bin/sh\n\
+    curl -Isf http://localhost:80/robots.txt || exit 1' > /tmp/healthcheck; \
+  else \
+    printf '\
+    #!/bin/sh\n\
+    cgi-fcgi -bind -connect localhost:9000' > /tmp/healthcheck; \
+  fi; \
+  chmod +x /tmp/healthcheck;
+
+# Add configuration
+COPY ./assets/nginx.conf /tmp/
+COPY ./assets/php-fpm*.conf /tmp/
 
 # The PrestaShop docker entrypoint
 COPY ./assets/docker_run.sh /tmp/
 
 RUN if [ "$SERVER_FLAVOUR" = "fpm" ]; then \
-     sed -i 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
+      sed -i 's/{PHP_CMD}/php-fpm -R/' /tmp/docker_run.sh; \
+      mv /tmp/php-fpm-standalone.conf /usr/local/etc/php-fpm.conf; \
+    elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+      sed -i 's/{PHP_CMD}/nginx-foreground/' /tmp/docker_run.sh; \
+      mv /tmp/php-fpm-local.conf /usr/local/etc/php-fpm.conf; \
+      mv /tmp/nginx.conf /etc/nginx/nginx.conf; \
+      mkdir -p /var/run/php; \
     else \
-     sed -i 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
-    fi
+      sed -i 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
+    fi; \
+    rm -rf /tmp/*.conf;
 
 # Handling a dynamic domain
 # Probably, or at least its usage must be described in the README file
@@ -128,7 +164,7 @@ LABEL maintainer="PrestaShop Core Team <coreteam@prestashop.com>"
 COPY --chown=www-data:www-data --from=alpine-download-prestashop ${PS_FOLDER} ${PS_FOLDER}
 
 HEALTHCHECK --interval=5s --timeout=5s --retries=10 --start-period=10s \
-  CMD curl -Isf http://localhost:80/robots.txt || exit 1
+  CMD /tmp/healthcheck
 
 EXPOSE 80
 

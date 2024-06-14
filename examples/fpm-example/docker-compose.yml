@@ -1,14 +1,29 @@
-name: prestashop-demo-example
+name: prestashop-fpm-example
 services:
   prestashop:
-    image: prestashop/prestashop:latest
+    image: prestashop/prestashop:fpm-latest
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       - PS_DOMAIN=localhost:8000
       - PS_DEMO_MODE=1
-      # - DEBUG_MODE=true
+    expose:
+      - 9000
+
+  # TODO: fix link between prestashop & nginx (eg: static assets...)
+  nginx:
+    image: nginx:latest
+    healthcheck:
+      test: [ "CMD", "curl", "-is", "http://localhost:80" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      prestashop:
+        condition: service_healthy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - 8000:80
 
@@ -27,21 +42,4 @@ services:
       - MYSQL_PORT=3306
       - MYSQL_DATABASE=prestashop
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    depends_on:
-      mysql:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-Isf", "http://localhost/robots.txt"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-      - PMA_USER=prestashop
-      - PMA_PASSWORD=prestashop
-      - MYSQL_ROOT_PASSWORD=prestashop
-    ports:
-      - 6060:80
+

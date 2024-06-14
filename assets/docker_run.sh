@@ -18,7 +18,7 @@ elif [ "$DB_SERVER" != "<to be defined>" -a $PS_INSTALL_AUTO = 1 ]; then
             sleep 5
         fi
     done
-        echo "\n* DB server $DB_SERVER is available, let's continue !"
+        echo "\n* DB server $DB_SERVER is available, let's continue!"
 fi
 
 # From now, stop at error
@@ -128,7 +128,7 @@ if [ $PS_DEMO_MODE -ne 0 ]; then
     sed -ie "s/define('_PS_MODE_DEMO_', false);/define('_PS_MODE_DEMO_',\ true);/g" /var/www/html/config/defines.inc.php
 fi
 
-echo "\n* Almost ! Starting web server now\n";
+echo "\n* Almost! Starting web server now\n";
 
 if [ -d /tmp/init-scripts/ ]; then
     echo "\n* Running init script(s)..."

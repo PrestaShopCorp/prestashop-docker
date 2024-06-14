@@ -56,10 +56,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   libzip-dev \
   unzip \
   wget \
+  libfcgi-bin \
   && /tmp/php-configuration.sh \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+## Server configuration
 # see: https://github.com/docker-library/php/blob/master/8.3/bullseye/apache/apache2-foreground
 RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
   export DEBIAN_FRONTEND=noninteractive \
@@ -70,18 +72,60 @@ RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
       apache2-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-  wget -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground"; \
-  chmod +x /usr/local/bin/apache2-foreground; \
-fi
+    && wget -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground" \
+    && chmod +x /usr/local/bin/apache2-foreground; \
+  elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+    export DEBIAN_FRONTEND=noninteractive \
+      && apt-get update \
+      && apt-get install --no-install-recommends -qqy \
+        nginx libnginx-mod-http-headers-more-filter libnginx-mod-http-geoip \
+        libnginx-mod-http-geoip libnginx-mod-stream \
+      && apt-get clean \
+      && rm -rf /var/lib/apt/lists/* \
+      && printf '\
+#!/bin/sh\n\
+php-fpm -D\n\
+nginx -g "daemon off;"\n\
+ ' > /usr/bin/nginx-foreground \
+    && chmod +x /usr/bin/nginx-foreground; \
+  fi
+
+## Healthcheck
+RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
+    printf '\
+    #!/bin/sh\n\
+    curl -Isf http://localhost:80/robots.txt || exit 1' > /tmp/healthcheck; \
+  elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+    printf '\
+    #!/bin/sh\n\
+    curl -Isf http://localhost:80/robots.txt || exit 1' > /tmp/healthcheck; \
+  else \
+    printf '\
+    #!/bin/sh\n\
+    cgi-fcgi -bind -connect localhost:9000' > /tmp/healthcheck; \
+  fi; \
+  chmod +x /tmp/healthcheck;
+
+# Add configuration
+COPY ./assets/nginx.conf /tmp/
+COPY ./assets/php-fpm*.conf /tmp/
 
 # The PrestaShop docker entrypoint
 COPY ./assets/docker_run.sh /tmp/
 
-RUN if [ "$SERVER_FLAVOUR" = "fpm" ]; \
-     then sed -i 's/{PHP_CMD}/php-fpm/' /tmp/docker_run.sh; \
+RUN if [ "$SERVER_FLAVOUR" = "fpm" ]; then \
+      sed -i 's/{PHP_CMD}/php-fpm -F /' /tmp/docker_run.sh; \
+      mv /tmp/php-fpm-standalone.conf /usr/local/etc/php-fpm.conf; \
+      mkdir -p /var/run/php; \
+    elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
+      sed -i 's/{PHP_CMD}/nginx-foreground/' /tmp/docker_run.sh; \
+      mv /tmp/php-fpm-local.conf /usr/local/etc/php-fpm.conf; \
+      mv /tmp/nginx.conf /etc/nginx/nginx.conf; \
+      mkdir -p /var/run/php; \
     else \
-     sed -i 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
-    fi
+      sed -i 's/{PHP_CMD}/apache2-foreground/' /tmp/docker_run.sh; \
+    fi; \
+    rm -rf /tmp/*.conf
 
 
 # Handling a dynamic domain
@@ -142,7 +186,7 @@ LABEL maintainer="PrestaShop Core Team <coreteam@prestashop.com>"
 COPY --chown=www-data:www-data --from=debian-download-prestashop ${PS_FOLDER} ${PS_FOLDER}
 
 HEALTHCHECK --interval=5s --timeout=5s --retries=10 --start-period=10s \
-  CMD curl -Isf http://localhost:80/robots.txt || exit 1
+  CMD /tmp/healthcheck
 
 EXPOSE 80
 
