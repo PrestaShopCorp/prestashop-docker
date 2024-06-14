@@ -51,5 +51,6 @@ jobs:
 
       - name: Test the image
         run: docker run --env PS_DOMAIN='localhost:80' $DOCKER_IMAGE cat VERSION
+#        run: docker run --env PS_DOMAIN='localhost:80' --entrypoint cat $DOCKER_IMAGE cat VERSION
         env:
           DOCKER_IMAGE: prestashop/prestashop:${{ matrix.ps_version }}-${{ matrix.os_flavour }}
