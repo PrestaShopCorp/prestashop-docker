@@ -68,7 +68,6 @@ RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
     && apt-get update \
     && apt-get install --no-install-recommends -qqy \
       apache2 \
-      apache2-proxy \
       apache2-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
