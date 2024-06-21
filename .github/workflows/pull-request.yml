@@ -51,6 +51,6 @@ jobs:
 
       - name: Test the image
         timeout-minutes: 10
-        run: docker run --rm -t --env PS_DOMAIN='localhost:80' --entrypoint bash $DOCKER_IMAGE -c 'cat VERSION'
+        run: docker run --rm -t --env PS_DOMAIN='localhost:80' --entrypoint sh $DOCKER_IMAGE -c 'cat VERSION'
         env:
           DOCKER_IMAGE: prestashop/prestashop:${{ matrix.ps_version }}-${{ matrix.os_flavour }}

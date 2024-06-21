@@ -147,7 +147,7 @@ RUN mkdir -p "$PS_FOLDER" /tmp/unzip-ps \
 RUN echo "PrestaShop $PS_VERSION" > "$PS_FOLDER/VERSION" \
   && echo "PHP $PHP_VERSION" >> "$PS_FOLDER/VERSION" \
   && echo "Server $SERVER_FLAVOUR" >> "$PS_FOLDER/VERSION" \
-  && echo "Git SHA $GIT_SHA" >> "$PS_FOLDER/VERSION" \
+  && echo "Git SHA $GIT_SHA" >> "$PS_FOLDER/VERSION"
 
 # Adds a robots.txt file
 COPY ./assets/robots.txt $PS_FOLDER
