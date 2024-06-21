@@ -108,9 +108,8 @@ get_target_images() {
   if [ "$PS_VERSION" == "nightly" ]; then
       if [ "$OS_FLAVOUR" = "$DEFAULT_OS" ]; then
         RES="-t ${DEFAULT_DOCKER_IMAGE}:nightly";
-      else
-        RES="-t ${DEFAULT_DOCKER_IMAGE}:nightly-${OS_FLAVOUR}";
       fi
+      RES="${RES} -t ${DEFAULT_DOCKER_IMAGE}:nightly-${OS_FLAVOUR}";
   else
     if [ "$PS_VERSION" = "$(get_latest_prestashop_version)" ] && [ "$OS_FLAVOUR" = "$DEFAULT_OS" ] && [ "$PHP_VERSION" = "$(get_recommended_php_version "$PS_VERSION")" ]; then
       RES="-t ${DEFAULT_DOCKER_IMAGE}:latest";
