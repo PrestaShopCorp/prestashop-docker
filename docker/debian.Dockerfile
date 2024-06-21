@@ -72,7 +72,7 @@ RUN if [ "$SERVER_FLAVOUR" = "apache" ]; then \
       apache2-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && wget -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground" \
+    && wget --quiet -O /usr/local/bin/apache2-foreground "https://raw.githubusercontent.com/docker-library/php/master/8.3/bullseye/apache/apache2-foreground" \
     && chmod +x /usr/local/bin/apache2-foreground; \
   elif [ "$SERVER_FLAVOUR" = "nginx" ]; then \
     export DEBIAN_FRONTEND=noninteractive \
