@@ -1,4 +1,4 @@
-lname: prestashop-nightly-example
+name: prestashop-nightly-example
 services:
   prestashop:
     image: prestashop/prestashop:nightly

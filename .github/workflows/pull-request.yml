@@ -36,7 +36,7 @@ jobs:
       fail-fast: false # TODO: Test only should be removed
       matrix:
         os_flavour: ["alpine", "debian"]
-        ps_version: ["1.6.1.24", "1.7.8.10", "8.1.6"]
+        ps_version: ["1.6.1.24", "1.7.8.10", "8.1.6", 'nightly']
         server_flavour: ["fpm", "nginx", "apache"]
     steps:
       - name: Checkout repository
