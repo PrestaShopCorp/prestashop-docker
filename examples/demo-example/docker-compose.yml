@@ -1,4 +1,5 @@
 name: prestashop-demo-example
+
 services:
   prestashop:
     image: prestashop/prestashop:latest
@@ -7,8 +8,6 @@ services:
         condition: service_healthy
     environment:
       - PS_DOMAIN=localhost:8000
-      - PS_DEMO_MODE=1
-      # - DEBUG_MODE=true
     ports:
       - 8000:80
 

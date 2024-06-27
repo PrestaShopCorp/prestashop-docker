@@ -1,6 +1,6 @@
 # How to use
 
-A PrestaShop Docker tool build, tag an publish production Docker images.
+A PrestaShop Docker tool build, tag and publish production Docker images.
 See: https://hub.docker.com/r/prestashop/prestashop
 
 ## Requirements
@@ -71,6 +71,20 @@ docker run -p 80:80 --detach --name prestashop prestashop/prestashop:latest
 | 8.0.1-alpine     | php 8.1 + alpine | N/A              |
 
 => mais pas de 8.0, car la version 8.0 n'est pas recommandée.
+
+### Exemple: je release PrestaShop "latest"
+
+> De même avec la nightly
+
+- `latest`
+- OS
+  - `debian` ou `latest-debian`
+  - `alpine` ou `latest-alpine`
+- Server
+  - `apache` ou `latest-apache`
+  - `fpm` ou `latest-fpm`
+  - `nginx` ou `latest-nginx`
+
 
 # Images
 
