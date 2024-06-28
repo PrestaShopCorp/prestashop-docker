@@ -6,13 +6,13 @@ cd "$(dirname "$0")"
 # -------------------
 declare PS_VERSION;      # -- PrestaShop version, defaults to latest
 declare PHP_VERSION;     # -- PHP version, defaults to recommended version for PrestaShop
-declare OS_FLAVOUR;      # -- either "alpine" (default) or "debian"
+declare OS_FLAVOUR;      # -- either "alpine" or "debian" (default)
 declare SERVER_FLAVOUR;  # -- either "apache" (default), "fpm" (no web server) or "nginx"
-declare TARGET_PLATFORM; # -- a comma separated list of target platforms (defaults to "linux/amd64")
+declare TARGET_PLATFORM; # -- a comma separated list of target platforms (defaults to your operating system)
 declare PLATFORM;        # -- alias for $TARGET_PLATFORM
-declare TARGET_IMAGE;    # -- docker image name, defaults to "prestashop/prestashop-flashlight"
+declare TARGET_IMAGE;    # -- docker image name, defaults to "prestashop/prestashop"
 declare PUSH;            # -- set it to "true" if you want to push the resulting image
-declare ZIP_SOURCE;      # -- the zip to unpack in flashlight
+declare ZIP_SOURCE;      # -- the zip to unpack in PrestaShop
 declare DRY_RUN;         # -- if used, won't really build the image. Useful to check tags compliance
 
 # Static configuration
@@ -23,7 +23,9 @@ DEFAULT_DOCKER_IMAGE=prestashop/prestashop
 DEFAULT_PLATFORM=$(docker system info --format '{{.OSType}}/{{.Architecture}}')
 GIT_SHA=$(git rev-parse HEAD)
 TARGET_PLATFORM="${TARGET_PLATFORM:-${PLATFORM:-$DEFAULT_PLATFORM}}"
-
+PRESTASHOP_TAGS=$(git ls-remote --tags git@github.com:PrestaShop/PrestaShop.git | cut -f2 | grep -Ev '\/1.5|\/1.6.0|alpha|beta|rc|RC|\^' | cut -d '/' -f3 | sort -r -V)
+#PRESTASHOP_MAJOR_TAGS=$(get_prestashop_major_tags)
+PRESTASHOP_MINOR_TAGS=$(get_prestashop_minor_tags)
 error() {
   echo -e "\e[1;31m${1:-Unknown error}\e[0m"
   exit "${2:-1}"
@@ -32,6 +34,39 @@ error() {
 get_latest_prestashop_version() {
   curl --silent --show-error --fail --location --request GET \
     'https://api.github.com/repos/prestashop/prestashop/releases/latest' | jq -r '.tag_name'
+}
+
+get_prestashop_minor_tags() {
+  while IFS= read -r version; do
+    major_minor=$(echo "$version" | cut -d. -f1-2)
+    major_minor_patch=$(echo "$version" | cut -d. -f1-3)
+    criteria=$major_minor
+    # shellcheck disable=SC3010
+    [[ "$major_minor" == 1* ]] && criteria=$major_minor_patch
+    if ! grep -q "^$criteria" "$PRESTASHOP_MINOR_TAGS"; then
+      echo "$version" >> "$PRESTASHOP_MINOR_TAGS"
+    fi
+  done < "$PRESTASHOP_TAGS"
+}
+
+
+is_version_latest_major_version() {
+  X_VERSION=$(echo "$1" | cut -d. -f1)
+  echo $X_VERSION
+}
+
+is_version_latest_minor_version() {
+  XY_VERSION=$(echo "$1" | cut -d. -f1-2)
+#  RES=$(echo $PRESTASHOP_TAGS | awk -F. '!seen[$1"."$2]++' | grep -x "$XY_VERSION")
+  echo $XY_VERSION
+}
+
+get_prestashop_tags() {
+  git ls-remote --tags git@github.com:PrestaShop/PrestaShop.git \
+  | cut -f2 \
+  | grep -Ev '\/1.5|\/1.6.0|alpha|beta|rc|RC|\^' \
+  | cut -d '/' -f3 \
+  | sort -r -V > "$PRESTASHOP_TAGS"
 }
 
 get_recommended_php_version() {
@@ -119,11 +154,15 @@ get_target_images() {
       if [ "$PHP_VERSION" = "$(get_recommended_php_version "$PS_VERSION")" ]; then
         RES="${RES} -t ${DEFAULT_DOCKER_IMAGE}:${PS_VERSION}";
         RES="${RES} -t ${DEFAULT_DOCKER_IMAGE}:php-${PHP_VERSION}";
+        # If the x.y.z version of PrestaShop is the latest version of the major
+
       fi
     fi
     RES="${RES} -t ${DEFAULT_DOCKER_IMAGE}:${PS_VERSION}-${PHP_FLAVOUR}";
     RES="${RES} -t ${DEFAULT_DOCKER_IMAGE}:${PS_VERSION}-${OS_FLAVOUR}";
   fi
+  echo "--------------> $(is_version_latest_minor_version "8.1.7")";
+  echo "--------------> $(is_version_latest_minor_version "8.1.6")";
   echo "$RES";
 }
 

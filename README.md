@@ -30,16 +30,18 @@ prestashop/prestashop:8.0.1-8.1-apache
 
 Available env vars:
 
-| Env var               | Description                                                                         | Default                            |
-|-----------------------|-------------------------------------------------------------------------------------|------------------------------------|
-| **PLATFORM**          | [Docker multiplatform arch](https://docs.docker.com/build/building/multi-platform/) | `linux/amd64`                      |
-| **OS_FLAVOUR**        | `debian` or `alpine`                                                                | `debian`                           |
-| **PHP_VERSION**       | [The PHP version](https://hub.docker.com/_/php)                                     | recommended version for PrestaShop |
-| **PHP_FLAVOUR**       | `fpm`, `apache` or `nginx`                                                          | `apache`                           |
-| **PS_VERSION**        | PrestaShop version                                                                  | `latest`                           |
-| **DOCKER_REPOSITORY** | the Docker image repository                                                         | `prestashop/prestashop`            |
-
-> Note: default debian distribution is set to Debian 11 Bullseye.
+| Env var             | Description                                                                                          | Default                                                                         |
+|---------------------|------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **PS_VERSION**      | PrestaShop version                                                                                   | `latest`                                                                        |
+| **PHP_VERSION**     | [The PHP version](https://hub.docker.com/_/php)                                                      | recommended version for PrestaShop                                              |
+| **OS_FLAVOUR**      | `debian` or `alpine`                                                                                 | `debian`                                                                        |
+| **SERVER_FLAVOUR**  | `apache`, `fpm` or `nginx`                                                                           | `apache`                                                                        |
+| **TARGET_PLATFORM** | a comma separated list of [target platforms](https://docs.docker.com/build/building/multi-platform/) | `docker system info --format '{{.OSType}}/{{.Architecture}}'`                   |
+| **PLATFORM**        | alias for `$TARGET_PLATFORM`                                                                         |                                                                                 |
+| **TARGET_IMAGE**    | docker image name                                                                                    | `prestashop/prestashop`                                                         |
+| **PUSH**            | set it to `true` if you want to push the resulting image                                             |                                                                                 |
+| **ZIP_SOURCE**      | the zip to unpack in flashlight                                                                      | Releases from [PrestaShop/PrestaShop](https://github.com/PrestaShop/PrestaShop) |
+| **DRY_RUN**         | if used, won't really build the image. Useful to check tags compliance                               |                                                                                 |
 
 ## Update
 
