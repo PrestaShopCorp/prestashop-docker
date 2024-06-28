@@ -1,0 +1,56 @@
+name: Pull Request
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+env:
+  TARGET_PLATFORM: "linux/amd64" # TODO: 'linux/amd64,linux/arm64,linux/arm' ? 32 bits ?
+
+
+jobs:
+  lint_shell:
+    name: "Lint: shell"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          ignore_paths: ./assets/docker_run.sh
+
+  lint_dockerfile:
+    name: "Lint: dockerfile"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+          dockerfile: "*.Dockerfile"
+
+  docker_build:
+    name: "Docker build: ${{ matrix.os_flavour }} for ${{ matrix.ps_version }} with ${{ matrix.server_flavour }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false # TODO: Test only should be removed
+      matrix:
+        os_flavour: ["alpine", "debian"]
+        ps_version: ["1.6.1.24", "1.7.8.10", "8.1.6", 'nightly']
+        server_flavour: ["fpm", "nginx", "apache"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Call the docker build chain
+        run: ./build.sh
+        env:
+          OS_FLAVOUR: ${{ matrix.os_flavour }}
+          PS_VERSION: ${{ matrix.ps_version }}
+          SERVER_FLAVOUR: ${{ matrix.server_flavour }}
+          TARGET_PLATFORM: ${{ env.TARGET_PLATFORM }}
+
+      - name: Test the image
+        run: docker run --rm -t --env PS_DOMAIN='localhost:80' --entrypoint sh $DOCKER_IMAGE -c 'cat VERSION'
+        env:
+          DOCKER_IMAGE: prestashop/prestashop:${{ matrix.ps_version }}-${{ matrix.os_flavour }}

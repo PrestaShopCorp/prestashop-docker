@@ -1,0 +1,43 @@
+name: prestashop-ngrok-tunnel
+services:
+  prestashop:
+    image: prestashop/prestashop:latest
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ngrok:
+        condition: service_started
+    environment:
+      - PS_DOMAIN=http://ngrok:4040
+      - PS_DEMO_MODE=1
+    ports:
+      - 8000:80
+
+  mysql:
+    image: mariadb:lts
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=prestashop
+      - MYSQL_PASSWORD=prestashop
+      - MYSQL_ROOT_PASSWORD=prestashop
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=prestashop
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4040 || exit 1"]
+      interval: 10s
+      timeout: 2s
+      start_period: 10s
+    volumes:
+      - ./ngrok.yml:/var/lib/ngrok/ngrok.yml
+    expose:
+      - 4040
